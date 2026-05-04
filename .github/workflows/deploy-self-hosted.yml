@@ -1,0 +1,88 @@
+# GitHub Actions — 自托管 Runner 部署（前后端分仓）
+# 后端：https://github.com/hyan86274-netizen/teach-record-backend
+# 前端：https://github.com/hyan86274-netizen/teach-record-front
+#
+# 请将本文件分别提交到上述两个仓库的 .github/workflows/（内容相同），这样任一侧 push 都会触发部署。
+# 检出规则：当前触发流水线所在的仓库用本次提交的 SHA；另一个仓库拉取 main 分支最新。
+#
+# 若为私有仓库且 checkout 失败，在两个仓库的 Actions Secrets 里添加 REPO_CHECKOUT_TOKEN（Fine-grained PAT，对两仓 Contents: Read），
+# 并在下方两个 checkout 步骤中增加：token: ${{ secrets.REPO_CHECKOUT_TOKEN }}
+#
+# 前置条件（服务器一次性）：Runner 服务、JDK/Maven/Node/rsync、systemctl teach-record、仓库 Variables：DEPLOY_JAR_DIR、DEPLOY_STATIC_DIR
+#
+# systemd 示例见仓库文档或下方注释：
+#   ExecStart=/usr/bin/java -jar /opt/teach-record/teach-record-api.jar
+#   EnvironmentFile=/opt/teach-record/teach-record.env
+
+name: Deploy (self-hosted)
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout backend
+        uses: actions/checkout@v4
+        with:
+          repository: hyan86274-netizen/teach-record-backend
+          path: backend
+          ref: ${{ github.event.repository.name == 'teach-record-backend' && github.sha || 'main' }}
+
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+        with:
+          repository: hyan86274-netizen/teach-record-front
+          path: frontend
+          ref: ${{ github.event.repository.name == 'teach-record-front' && github.sha || 'main' }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Set up Maven
+        uses: stCarolas/setup-maven@v5
+        with:
+          maven-version: 3.9.9
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build backend
+        run: cd backend && mvn -B package -DskipTests
+
+      - name: Build frontend
+        run: cd frontend && npm ci && npm run build
+
+      - name: Deploy to paths (jar + static)
+        env:
+          DEPLOY_JAR_DIR: ${{ vars.DEPLOY_JAR_DIR }}
+          DEPLOY_STATIC_DIR: ${{ vars.DEPLOY_STATIC_DIR }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DEPLOY_JAR_DIR:-}" ] || [ -z "${DEPLOY_STATIC_DIR:-}" ]; then
+            echo "请在仓库 Settings → Variables 中设置 DEPLOY_JAR_DIR 与 DEPLOY_STATIC_DIR"
+            exit 1
+          fi
+          JAR="$(ls backend/target/teach-record-api-*.jar 2>/dev/null | grep -v 'original-' | head -1)"
+          if [ -z "$JAR" ] || [ ! -f "$JAR" ]; then
+            echo "未找到 backend/target/teach-record-api-*.jar，请先确认 Maven 构建成功"
+            exit 1
+          fi
+          sudo mkdir -p "$(dirname "$DEPLOY_JAR_DIR")" "$DEPLOY_STATIC_DIR"
+          sudo cp -f "$JAR" "$DEPLOY_JAR_DIR"
+          sudo rsync -a --delete frontend/dist/ "$DEPLOY_STATIC_DIR/"
+          sudo systemctl restart teach-record
