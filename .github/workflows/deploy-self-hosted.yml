@@ -1,6 +1,6 @@
 # GitHub Actions — 自托管 Runner 部署（前后端分仓）
-# 后端：https://github.com/hyan86274-netizen/teach-record-backend
-# 前端：https://github.com/hyan86274-netizen/teach-record-front
+# 后端：https://github.com/lindong123456/teach-record-backend
+# 前端：https://github.com/lindong123456/teach-record-front
 #
 # 请将本文件分别提交到上述两个仓库的 .github/workflows/（内容相同），这样任一侧 push 都会触发部署。
 # 检出规则：当前触发流水线所在的仓库用本次提交的 SHA；另一个仓库拉取 main 分支最新。
@@ -30,14 +30,14 @@ jobs:
       - name: Checkout backend
         uses: actions/checkout@v4
         with:
-          repository: hyan86274-netizen/teach-record-backend
+          repository: lindong123456/teach-record-backend
           path: backend
           ref: ${{ github.event.repository.name == 'teach-record-backend' && github.sha || 'main' }}
 
       - name: Checkout frontend
         uses: actions/checkout@v4
         with:
-          repository: hyan86274-netizen/teach-record-front
+          repository: lindong123456/teach-record-front
           path: frontend
           ref: ${{ github.event.repository.name == 'teach-record-front' && github.sha || 'main' }}
 
