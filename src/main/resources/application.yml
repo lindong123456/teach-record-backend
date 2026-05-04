@@ -2,7 +2,7 @@ spring:
   application:
     name: teach-record-api
   datasource:
-    url: jdbc:mysql://111.229.234.228:3306/teach_record?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+    url: jdbc:mysql://111.229.234.228:3308/teach_record?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8
     username: root
     password: TSWsjO3oq3PUnOt
     driver-class-name: com.mysql.cj.jdbc.Driver
