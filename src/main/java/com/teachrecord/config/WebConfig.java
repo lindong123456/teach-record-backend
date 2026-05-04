@@ -7,7 +7,7 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-@EnableConfigurationProperties(AppUploadProperties.class)
+@EnableConfigurationProperties({AppUploadProperties.class, AppCorsProperties.class})
 public class WebConfig implements WebMvcConfigurer {
 
     private final AppUploadProperties uploadProperties;

@@ -12,14 +12,15 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class GlobalCorsConfig {
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource(AppCorsProperties corsProperties) {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(
-                List.of(
-                        "http://localhost:5173",
-                        "http://127.0.0.1:5173",
-                        "http://localhost:4173",
-                        "http://127.0.0.1:4173"));
+        List<String> patterns = corsProperties.getAllowedOriginPatterns();
+        if (patterns == null || patterns.isEmpty()) {
+            /* allowCredentials=false：可用 *，浏览器任意 Origin 可调 API（仍受 JWT 保护） */
+            cfg.setAllowedOriginPatterns(List.of("*"));
+        } else {
+            cfg.setAllowedOriginPatterns(patterns);
+        }
         cfg.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
         cfg.setAllowCredentials(false);
@@ -29,3 +30,4 @@ public class GlobalCorsConfig {
         return source;
     }
 }
+

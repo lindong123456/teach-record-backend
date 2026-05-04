@@ -10,6 +10,7 @@ com/teachrecord/web/dto/LessonDtos$LessonUpdate.class
 com/teachrecord/service/StatsService.class
 com/teachrecord/web/dto/AuthDtos$RegisterRequest.class
 com/teachrecord/domain/Lesson.class
+com/teachrecord/config/AppCorsProperties.class
 com/teachrecord/web/ParentController.class
 com/teachrecord/service/FileStorageService.class
 com/teachrecord/security/SecurityConfig.class
